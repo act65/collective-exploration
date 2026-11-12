@@ -1,0 +1,13 @@
+{
+  "contracts": {},
+  "tests": {
+    "tests/test_regvec.py": {
+      "coverage": false,
+      "isolated": false,
+      "results": "...........................",
+      "sha1": "ebc50029237891f712c2bb677068d74f5b686a1b",
+      "txhash": []
+    }
+  },
+  "tx": {}
+}

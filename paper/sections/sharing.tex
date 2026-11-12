@@ -1,0 +1,52 @@
+% ======================================================================
+\section{Time-sharing: the lever that consistency rules out}\label{sec:sharing}
+% ======================================================================
+
+\Cref{sec:cone,sec:fair} hold the target fixed: a consistent planner must end up at $\astar$, so it can only move burdens on the $\log T$ scale. A planner that is allowed to miss $\astar$ on purpose has a much stronger lever. It can hold several policies in rotation, each for a fixed fraction of the time. This is how the same public-arm model is treated by \citet{hossain2021} and \citet{jones2023}, who target the distribution over arms that maximises Nash welfare. This section asks what that lever does to the per-person accounts.
+
+\begin{definition}[Time-share]
+A \emph{time-share} is a distribution $p$ over the $K$ arms. Its long-run reward vector is $u(p)=\mu p$, its conflict loss for person $i$ is $\rho_i(p)=m_i-u_i(p)\ge0$, and its welfare price is $W(\astar)-\mathbf 1^\top\mu p=\sum_{a\neq\astar}p_a\Delta_a$ per round.
+\end{definition}
+
+Relative to $\astar$, a time-share that puts weight $q_a$ on each arm $a\neq\astar$ changes person $i$'s reward by $-(Dq)_i$ per round. These are the same generators as in \cref{thm:cone}: the columns of $D$, one per suboptimal arm. The cone of \cref{sec:cone} is what they generate on the $\log T$ scale, above the floor $\cmin$; time-sharing uses them on the scale of $T$, with no floor. Two things follow at once. Time-sharing can raise a person's reward only through an arm that person prefers to $\astar$. And the people it cannot help are those with $\delta_{i,\cdot}\ge0$, who by \cref{cor:irreducible} have no conflict loss to remove.
+
+\paragraph{The smallest largest conflict loss.} The analogue of the min-max burden is
+\[
+  v_c(\nu)=\min_{p}\ \max_i\ \rho_i(p).
+\]
+
+\begin{proposition}\label{prop:share}
+$v_c$ is the value of the linear program $\min\{t:\ m_i-(\mu p)_i\le t\ \forall i,\ p\ge0,\ \mathbf 1^\top p=1\}$, and it is attained by a time-share that uses at most $N+1$ arms. Let $J$ be the set of people with the largest conflict loss under $\astar$. The pure policy $\astar$ attains $v_c$ if and only if there are weights $y\ge0$ on $J$, summing to one, with $y^\top D_J\ge0$. In particular, if one person alone has the largest conflict loss and it is positive, some time-share does strictly better than $\astar$.
+\end{proposition}
+
+\begin{proof}
+The program is the definition of $v_c$. The vector $u(p)$ lies in the convex hull of the $K$ columns of $\mu$ in $\R^N$, so by Carath\'eodory's theorem it is a mixture of at most $N+1$ of them. For the second claim, write a time-share as weight $q\ge0$ on the arms other than $\astar$, with $\mathbf 1^\top q\le1$. Then $\max_i\rho_i=\max_i[\rho_i(\astar)+(Dq)_i]$ is convex and piecewise linear in $q$, and the constraint $\mathbf 1^\top q\le1$ is inactive at $q=0$. So $q=0$ is optimal if and only if there is no direction $e\ge0$ with $D_Je<0$, and \cref{lem:alt} gives the condition. If $J=\{j\}$ and $\rho_j(\astar)>0$, person $j$ strictly prefers some arm to $\astar$, so row $j$ of $D$ has a negative entry and no $y$ exists.
+\end{proof}
+
+The condition has the same form as \cref{prop:ville}, with the people who have the largest conflict loss in place of the people who have the largest learning burden. Its consequences are opposite. The person with the largest learning burden usually prefers $\astar$ to everything, so nothing can be done for them. The person with the largest conflict loss never does, so something always can.
+
+\begin{example}[Sharing a near-tie]\label{ex:share}
+In \cref{ex:blog} the conflict losses under $\astar$ are $(0.5,0.5,0)$. Holding $b$ for a fraction $q_b$ of the time gives $(0.5-0.5q_b,\ 0.5-0.5q_b,\ 1.1q_b)$, which is equalised at $q_b=5/16$: every person then loses $0.344$ per round against their own favourite. The welfare price is $\Delta_bq_b=0.031$ per round, about $1\%$ of $W(\astar)$.
+\end{example}
+
+\paragraph{Near-ties are costly to resolve and cheap to share.} Ruling out arm $a$ costs the collective $\Delta_a\cmin_a=2\sigma^2/\Delta_a$ per unit of $\log T$, which is large when $\Delta_a$ is small. Sharing with arm $a$ costs $\Delta_a$ per unit of time, which is small when $\Delta_a$ is small. A polarising near-tie is therefore the case in which a utilitarian planner spends most of its exploration to settle a question whose answer matters least for total welfare and most for who gets it. In \cref{ex:blog}, telling $\astar$ from $b$ takes $600\log T$ rounds of $b$ and is worth $0.1$ per round in total; the same choice moves $1.1$ per round between people.
+
+\paragraph{Random instances.} On the instance distribution of \cref{sec:numerics}, \cref{tab:share} reports how often some time-share has a smaller largest conflict loss than $\astar$, and by how much. Time-sharing helps in almost every instance, and it cuts the largest conflict loss by a third or more at the median. The same table recalls the corresponding numbers for the exploration lever of \cref{sec:fair}.
+
+\begin{table}[h]\centering\small
+\begin{tabular}{rrccc|c}
+\toprule
+& & \multicolumn{3}{c|}{time-sharing, largest conflict loss} & exploration, largest burden\\
+$N$ & $K$ & can be reduced & median reduction & median price per person & can be reduced\\
+\midrule
+3 & 3 & 90\% & 34\% & 0.11 & 7\%\\
+5 & 4 & 100\% & 40\% & 0.18 & 10\%\\
+10 & 5 & 100\% & 41\% & 0.19 & 10\%\\
+20 & 8 & 100\% & 42\% & 0.19 & 21\%\\
+\bottomrule
+\end{tabular}
+\caption{400 random instances per row ($\mu_{i,a}\sim\mathcal N(0,1)$ i.i.d.). Medians are over instances in which a reduction is possible. The price is the welfare given up per person per round, in units of the standard deviation of $\mu_{i,a}$. The last column is one minus the second column of \cref{tab:freq}.}
+\label{tab:share}
+\end{table}
+
+\paragraph{Learning a time-share.} We have described the target, not a planner that learns it. \citet{hossain2021} and \citet{jones2023} give planners with scalar regret of order $\sqrt T$ against the Nash-welfare time-share. Two observations bear on the per-person version, which we leave open. First, every arm in the support of the target is held for a constant fraction of the time, so it is sampled linearly often and there is no logarithmic exploration of it to pay for; only arms outside the support have to be ruled out. Second, the target depends on each person's means and not only on the totals, so a planner that learns it must observe individual rewards.

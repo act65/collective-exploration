@@ -1,0 +1,9 @@
+paper/main.aux
+paper/main.bbl
+paper/main.blg
+paper/main.log
+paper/main.out
+paper/main.toc
+__pycache__/
+.pytest_cache/
+*.egg-info/
