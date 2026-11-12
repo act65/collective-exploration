@@ -4,8 +4,8 @@
     "tests/test_regvec.py": {
       "coverage": false,
       "isolated": false,
-      "results": "...........................",
-      "sha1": "ebc50029237891f712c2bb677068d74f5b686a1b",
+      "results": "............................",
+      "sha1": "3fbaa0387860131982cecaf984d6998a02f4b000",
       "txhash": []
     }
   },

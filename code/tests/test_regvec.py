@@ -294,3 +294,21 @@ def test_reform_bad_reforms_are_dropped_sooner():
     plan = reform.solve(40, 3.0)
     r = [plan.simulate(0.0, th, paths=2000).mean() for th in (-1.0, 0.0, 1.0)]
     assert r[0] < r[1] < r[2]
+
+
+# --- institutions for the scorecard -------------------------------------------
+def test_institutions_scores_are_time_averages_of_arm_rewards():
+    """Every planner's average reward vector is a mixture of the columns of mu,
+    the utilitarian learner improves with the horizon, and the individually
+    rational planner stays within its tolerance of the status quo."""
+    from regvec.institutions import run_index, run_pilot, run_ir
+    inst, hs = status_quo_example(), [50, 500, 5000]
+    W = inst.welfare
+    for avg in (run_index(inst, 3, hs, R=50, algo="ucb"), run_index(inst, 3, hs, R=50, algo="ts"),
+                run_pilot(inst, 3, hs, R=50)):
+        w = avg.sum(axis=2)
+        assert np.all(w <= W.max() + 1e-9) and np.all(w >= W.min() - 1e-9)
+    ts = run_index(inst, 3, hs, R=200, algo="ts").sum(axis=2).mean(axis=1)
+    assert ts[0] < ts[1] < ts[2] and ts[2] > 2.95
+    ir = run_ir(inst, 3, 0.05, 1.0, hs, R=3)
+    assert np.all(ir - inst.mu[:, 3] >= -0.05 - 1e-9)

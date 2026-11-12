@@ -103,6 +103,7 @@ This paper asks a narrow question about that hidden distribution. If a planner l
   \item \textbf{Min-max burden} (\cref{prop:lp,prop:ville}). Minimising the largest burden over the cone is a linear program. The utilitarian planner cannot be improved on exactly when some weighted average of the worst-off people weakly prefers $\astar$ to every alternative, which holds in roughly 80--93\% of random instances.
   \item \textbf{Time-sharing} (\cref{sec:sharing}). A planner that holds several policies in rotation moves per-person outcomes on the scale of $T$. The smallest largest conflict loss is a linear program with the same alternative condition, applied to different people, and the opposite conclusion: time-sharing helps in 90--100\% of random instances.
   \item \textbf{Status quo, privilege and individual rationality} (\cref{sec:sq}). With a status quo as baseline we define privilege (\cref{def:privilege}), show that a planner that tolerates no expected loss for anyone can never try anything (\cref{prop:nofree}), characterise when unanimity blocks all reform (\cref{prop:weights}), and give a planner that keeps every person within a tolerance of the status quo in every round (\cref{prop:safe}). We have no regret bound for it.
+  \item \textbf{A scorecard of institutions} (\cref{sec:score}). On one example we score seven institutions on welfare and each person's gain over the status quo, at horizons from $30$ to $30{,}000$ rounds.
   \item \textbf{Short horizons and frictions} (\cref{sec:finite}). In a one-reform problem solved numerically, the welfare-maximising planner tries reforms it expects to be worse than the status quo, and switching costs and fixed terms raise the bar for trying.
 \end{enumerate}
 
@@ -408,12 +409,13 @@ In \cref{ex:blog}, person 3 is the unique worst-off person and weakly prefers $\
 \input{sections/sharing}
 \input{sections/statusquo}
 \input{sections/finite}
+\input{sections/scorecard}
 
 % ======================================================================
 \section{Numerical illustrations for the asymptotic results}\label{sec:numerics}
 % ======================================================================
 
-All numbers in this section are produced by \texttt{code/scripts/simulate.py}, and those in \cref{sec:sharing,sec:sq,sec:finite} by \texttt{code/scripts/extensions.py}; the tests in \texttt{code/tests/} compare simulations and independent computations with the closed forms above. Planners observe only the welfare signal.
+All numbers in this section are produced by \texttt{code/scripts/simulate.py}, and those in \cref{sec:sharing,sec:sq,sec:finite} by \texttt{code/scripts/extensions.py} and those in \cref{sec:score} by \texttt{code/scripts/scorecard.py}; the tests in \texttt{code/tests/} compare simulations and independent computations with the closed forms above. Planners observe only the welfare signal.
 
 \paragraph{Convergence is slow.} The theorems are statements about $T\to\infty$, and for small gaps the approach is slow. \Cref{tab:conv} reports $\E[R_i(T)]/\log T$ for \cref{ex:blog} over 20 seeds. For UCB, the count of the near-tie arm $b$ (gap-to-noise ratio $\Delta_b/\sigma\approx0.06$) reaches its asymptotic rate only at $T\approx10^6$; for the large-gap arm $c$, UCB stays about $30\%$ above the limit, consistent with the $2\log\log T$ term in $\log f(T)$. Thompson sampling is far below the limit at every horizon we ran, at about $40\%$ of the asymptotic count for $b$ at $T=10^6$; this is not a contradiction, since \cref{thm:lower} is asymptotic and its finite-$T$ form subtracts a term that is large for near-ties. The per-person \emph{ratios} are nevertheless as predicted at every horizon, because both planners spend almost all their exploration on $b$: the ratio of person 3's burden to person 1's gain is $2.21$ in the limit and between $2.2$ and $2.4$ in every simulated row (\cref{fig:traj}).
 
@@ -509,31 +511,11 @@ $N$ & $K$ & unimprovable & median reduction in worst burden & median increase in
 
 \paragraph{What the planner can do.} A planner committed to $\astar$ can only try some arms more often (\cref{thm:cone}), which helps a person only through an arm that person prefers to $\astar$ and always raises total regret; in most random instances it cannot lower the largest burden at all (\cref{prop:ville}). A planner willing to hold policies in rotation can do much more (\cref{sec:sharing}), at a welfare price that is smallest for exactly the near-ties that are most expensive to resolve. A planner that must leave nobody worse off than the status quo cannot begin without some tolerance (\cref{prop:nofree}), and with it can be made safe by construction (\cref{prop:safe}).
 
-\paragraph{Comparing institutions.} Each of these is a rule for choosing policies, and each can be scored on the same card: welfare, each person's gain over the status quo, and the largest conflict loss. \Cref{tab:score} does this for \cref{ex:sq} in the long run, where every entry is the solution of a linear program. The same card can be filled in at a finite horizon by simulation, as in \cref{fig:planner}, or by dynamic programming, as in \cref{sec:finite}; doing that for each row, with the learning cost included, is the natural next step.
-
-\begin{table}[h]\centering\small
-\begin{tabular}{lcccc}
-\toprule
-& welfare & \multicolumn{2}{c}{gain over the status quo} & largest\\
-institution (long-run policy) & per round & persons 1, 2 & person 3 & conflict loss\\
-\midrule
-keep the status quo & 2.60 & $0$ & $0$ & 0.80\\
-utilitarian learner ($\astar$) & 3.00 & $-0.20$ & $+0.80$ & 0.50\\
-utilitarian learner with transfers & 3.00 & $0$ & $+0.40$ & --\\
-unanimity, $\alpha=0$ ($60\%\ \astar$, $40\%\ b$) & 2.96 & $0$ & $+0.36$ & 0.44\\
-tolerance $\alpha=0.05$ ($70\%\ \astar$, $30\%\ b$) & 2.97 & $-0.05$ & $+0.47$ & 0.35\\
-smallest largest conflict loss ($69\%\ \astar$, $31\%\ b$) & 2.97 & $-0.04$ & $+0.46$ & 0.34\\
-\bottomrule
-\end{tabular}
-\caption{\Cref{ex:sq}: long-run outcome per round under six institutions. The transfer row moves $0.2$ per round from person 3 to each of persons 1 and 2, which requires transferable rewards. Learning costs are not included: for the utilitarian learner they are $79\log T$ in total and $691\log T$ for person 3; for the time-shares they are not yet characterised.}
-\label{tab:score}
-\end{table}
-
 \paragraph{What this suggests for governments and firms.} The following are suggestions that the results support, not conclusions that they prove; each is tied to the result behind it.
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
   \item \emph{Keep the per-person account.} The total hides transfers between people that can be ten times its size (\cref{ex:blog}), and it cannot be reconstructed from aggregate outcomes (\cref{rem:noinfo}). Who is exposed, what it costs them and when it ends have to be measured.
   \item \emph{Treat the status quo as a policy.} Keeping it has a regret vector, which falls on the people it serves worst (\cref{sec:sq}).
-  \item \emph{Compensate; do not rely on vetoes.} A veto costs welfare in every round and usually blocks everything (\cref{tab:ir}). The transfers that would even out the cost of learning are logarithmic in the horizon.
+  \item \emph{Compensate; do not rely on vetoes.} A veto costs welfare in every round and usually blocks everything (\cref{tab:ir}). In our example the transfers that hold everyone at the status quo under a utilitarian learner never exceed its welfare gain, at any horizon we ran (\cref{sec:score}).
   \item \emph{Share near-ties.} Where two policies are close in total and far apart in who they serve, resolving the tie costs the most and matters the least for welfare (\cref{sec:sharing}). Rotation, regional variation or opt-outs give each side part of what it wants.
   \item \emph{State the tolerance.} No experiment on a public policy is free of expected loss for everyone (\cref{prop:nofree}). Choosing $\alpha$ openly is better than choosing it by default.
   \item \emph{Try reforms that are expected to be slightly worse, where stopping is cheap.} The option to stop is worth more the longer the horizon and the lower the cost of reversal (\cref{sec:finite}). Long terms and costly reversals are reasons to try less, and to make policies easier to reverse.
@@ -554,6 +536,7 @@ A firm differs from a government in one respect that matters here: its customers
   \item \textbf{Model.} Gaussian rewards with known covariance, stationary means, an unstructured class and a unique optimum. Other exponential families change the constants through the KL divergence; structured classes change them more substantially (\cref{rem:noinfo}).
   \item \textbf{Known status quo and a known bound.} \Cref{sec:sq} assumes the status-quo means are known exactly and that a bound $L$ on the loss from any policy is known. The tolerance $\alpha$ is in expectation per round; realised losses can be larger.
   \item \textbf{No strategic behaviour.} People report honestly and cannot exit, organise or refuse. All of these would change what the planner observes.
+  \item \textbf{One example.} The scorecard of \cref{sec:score} is for a single instance with three people, with planners that are not tuned.
   \item \textbf{Random instances.} The frequencies in \cref{tab:freq,tab:share,tab:ir} depend on the chosen instance distribution, in which people's rewards are independent. Populations with shared interests would look different.
   \item \textbf{Voting and ballots.} The planner here observes rewards. An institution that observes votes converges to something other than $\astar$, and the gap is the distortion term of \cref{sec:intro}. Closing the loop, with a ballot as the feedback channel and the per-person accounts of this paper as the outcome, would combine this paper with \cite{telfar2026}; so would taking policies to be bundles of issue decisions, a structured class in the sense of \cref{rem:noinfo}.
 \end{itemize}

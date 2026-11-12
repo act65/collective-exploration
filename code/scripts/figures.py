@@ -307,6 +307,43 @@ def fig_reform():
     plt.close(fig)
 
 
+def fig_scorecard():
+    path = os.path.join(REPORTS, "scorecard.json")
+    if not os.path.exists(path):
+        print("no reports/scorecard.json; run scorecard.py first")
+        return
+    res = json.load(open(path))
+    T = np.array(res["T"])
+    inst = res["institutions"]
+    # (key, label, colour, dash, label offset in points for each panel)
+    rows = [
+        ("oracle: adopt a* at once", "adopt $a^\\star$ at once", INK, (0, (1, 2)), (0, 0)),
+        ("utilitarian learner (Thompson)", "utilitarian learner", P12, "-", (-9, 0)),
+        ("pilot, then decide", "pilot, then decide", "#eda100", "-", (0, 9)),
+        ("equal-conflict time-share (plug-in)", "time-share", "#6250d6", "-", (-10, 0)),
+        ("individually rational, alpha = 0.2", "indiv. rational, $\\alpha=0.2$", P3, (0, (4, 2)), (9, -9)),
+        ("individually rational, alpha = 0.05", "indiv. rational, $\\alpha=0.05$", P3, "-", (0, 9)),
+        ("keep the status quo (or unanimity)", "keep the status quo", MUTED, "-", (-9, 0)),
+    ]
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(7.0, 3.6))
+    for key, label, col, ls, _ in rows:
+        r = inst[key]
+        ax.plot(T, r["welfare"], color=col, ls=ls, lw=1.6, label=label)
+        bx.plot(T, np.array(r["gain"])[:, 0], color=col, ls=ls, lw=1.6)
+    for a in (ax, bx):
+        a.set_xscale("log")
+        a.set_xlabel("horizon $T$ (rounds)")
+    ax.set_ylabel("average welfare per round")
+    ax.set_title("Welfare")
+    bx.set_ylabel("average gain per round\nover the status quo")
+    bx.set_title("Persons 1 and 2")
+    fig.legend(loc="lower center", ncol=4, frameon=False, fontsize=7.5, handlelength=2.6,
+               columnspacing=1.4)
+    fig.tight_layout(w_pad=2.0, rect=(0, 0.12, 1, 1))
+    fig.savefig(os.path.join(FIGS, "fig_scorecard.pdf"))
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     os.makedirs(FIGS, exist_ok=True)
     fig_example()
@@ -315,4 +352,5 @@ if __name__ == "__main__":
     fig_sharing()
     fig_planner()
     fig_reform()
+    fig_scorecard()
     print("wrote fig_example.pdf, fig_cone.pdf, fig_trajectories.pdf to", os.path.abspath(FIGS))

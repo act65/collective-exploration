@@ -15,16 +15,17 @@ and `_drafts/inbetween-posts/2026-10-24-who-pays-for-exploration.md`.
 - `paper/` — the paper (`make` builds `main.pdf`; `make check` lists warnings).
 - `paper/sections/` — the time-sharing, status-quo and finite-horizon sections.
 - `code/regvec/` — closed forms (`instance.py`), planners vectorised over seeds (`planners.py`), LPs over the cone (`fairness.py`), time-sharing and status-quo LPs (`sharing.py`), the individually rational planner (`safe.py`), the one-reform dynamic program (`reform.py`).
-- `code/tests/` — 27 tests (`cd code && python -m pytest -q`, about 30 s). Each test compares a simulation or an independent computation with a closed form.
+- `code/tests/` — 28 tests (`cd code && python -m pytest -q`, about 30 s). Each test compares a simulation or an independent computation with a closed form.
 - `code/scripts/simulate.py` — numbers for the asymptotic sections. A full run takes about 4–5 min; `--quick` is faster. Output goes to `code/reports/results.json`, `code/reports/simulate.log` and `paper/figures/`.
 - `code/scripts/extensions.py` — numbers for the time-sharing, status-quo and finite-horizon sections (about 2 min), written to `code/reports/extensions.json`.
+- `code/scripts/scorecard.py` — the finite-horizon scorecard of institutions (about 2 min), written to `code/reports/scorecard.json`; the planners are in `code/regvec/institutions.py`.
 - `code/scripts/figures.py` — all figures in the paper, drawn from closed forms and the two reports.
 - `notes/extensions.md` — the list of extensions and open problems.
 - `notes/review-and-directions.md`, `notes/lit-review.md` — the 2026-11-12 review of the first draft and the literature search.
 
 ## Status (2026-11-12)
 
-**Added on 2026-11-12** (sections 7–9 of the paper).
+**Added on 2026-11-12** (sections 7–10 of the paper).
 
 | Result | Statement | Status |
 |---|---|---|
@@ -35,6 +36,7 @@ and `_drafts/inbetween-posts/2026-10-24-who-pays-for-exploration.md`.
 | Proposition (no free trial) | A planner that tolerates no expected loss for anyone never leaves the status quo. | Proved. |
 | Proposition (unanimity) | No unanimous improvement exists iff some welfare weights make the status quo optimal. | Proved; tested. |
 | Proposition (safety) | The individually rational planner keeps every person within α of the status quo in every round, with confidence 1−δ. | Proved; tested. **No regret bound.** |
+| Scorecard (section 10) | Seven institutions on the status-quo example, T = 30 to 30,000: welfare and each person's gain over the status quo. | Simulation only, one instance, untuned planners. |
 | One-reform toy | Bayes-optimal thresholds and trial lengths with switching costs and terms. | Numerical only. |
 
 "Fairness is free" is now "unimprovable" throughout: the condition says the largest burden cannot be reduced, not that the burdens are fair.
