@@ -111,3 +111,78 @@ def run_ir(inst: Instance, a0: int, alpha: float, L: float, horizons, R: int = 4
         rec, U, _, _ = run_pc(inst, a0, alpha, L, int(hs[-1]), seed=seed + r, record=hs)
         out[:, r] = U / rec[:, None] + inst.mu[:, a0]
     return out
+
+
+def run_pooled(inst: Instance, a0: int, alpha: float, L: float, horizons, R: int = 40,
+               delta: float = 0.05, seed: int = 0):
+    """Compensation in place of per-person floors.
+
+    Every person is paid their status-quo reward each round and the surplus
+    sum_i X_ti - W(a0) is shared equally, so person i's expected net gain in a
+    round is (W(p_t) - W(a0)) / N. Keeping that above -alpha for everyone is
+    one constraint on welfare, W(p_t) >= W(a0) - N alpha, which the planner
+    enforces with a lower confidence bound on the welfare signal alone.
+
+    Returns (avg_welfare[h, r], worst) where worst is the smallest per-round
+    margin W(p_t) - W(a0) over all runs (must stay above -N alpha).
+    """
+    from scipy.optimize import linprog
+    W, s, K, N = inst.welfare, math.sqrt(inst.sigma2), inst.K, inst.N
+    others = np.array([a for a in range(K) if a != a0])
+    hs = np.asarray(horizons)
+    solve_at = set(_lp_times(int(hs[-1])).tolist())
+    out, worst = np.empty((len(hs), R)), 0.0
+    ones, bnd = np.ones((1, K)), [(0, None)] * K
+    for r in range(R):
+        rng = np.random.default_rng(seed + r)
+        n, sums, tot, j = np.zeros(K), np.zeros(K), 0.0, 0
+        p = np.zeros(K)
+        p[a0] = 1.0
+        for t in range(1, int(hs[-1]) + 1):
+            if t in solve_at:
+                lcb = np.full(K, W[a0] - N * L)
+                ucb = np.full(K, W[a0] + N * L)
+                lcb[a0] = ucb[a0] = W[a0]
+                seen = others[n[others] > 0]
+                if len(seen):
+                    m = n[seen]
+                    rad = s * np.sqrt(2.0 * np.log(4.0 * K * m * (m + 1) / delta) / m)
+                    mean = sums[seen] / m
+                    lcb[seen] = np.clip(mean - rad, W[a0] - N * L, W[a0] + N * L)
+                    ucb[seen] = np.clip(mean + rad, W[a0] - N * L, W[a0] + N * L)
+                b = [-(W[a0] - N * alpha)]
+                q = np.clip(linprog(-ucb, A_ub=-lcb[None, :], b_ub=b, A_eq=ones, b_eq=[1.0],
+                                    bounds=bnd, method="highs").x, 0, None)
+                A = np.vstack([np.r_[-lcb, 0.0]] + [np.r_[-np.eye(K)[a], 1.0] for a in others])
+                e = np.clip(linprog(np.r_[np.zeros(K), -1.0], A_ub=A, b_ub=b + [0.0] * len(others),
+                                    A_eq=np.hstack([ones, [[0.0]]]), b_eq=[1.0],
+                                    bounds=bnd + [(0, None)], method="highs").x[:K], 0, None)
+                g = min(1.0, t ** (-1.0 / 3.0))
+                p = (1 - g) * q / q.sum() + g * e / e.sum()
+            a = rng.choice(K, p=p)
+            step = W @ p
+            worst = min(worst, step - W[a0])
+            tot += step
+            n[a] += 1
+            sums[a] += W[a] + s * rng.standard_normal()
+            if t == hs[j]:
+                out[j, r] = tot / t
+                j += 1
+    return out, worst
+
+
+def certification_pulls(gain: np.ndarray, sig: np.ndarray, alpha: float, q: float,
+                        delta: float = 0.05):
+    """Lower bounds (two-policy case) on the expected number of trials of a
+    reform before a planner may hold it a fraction q of the time.
+
+    gain[i] is person i's gain from the reform over the status quo. Returns
+    (per_person, pooled): with one floor per person, and with compensation
+    (one pooled floor). inf if the reform cannot be held that often at all.
+    """
+    kl = 0.5 * math.log(1.0 / (4.0 * delta * (1.0 - delta)))
+    x = gain + alpha / q
+    per = float(np.max(2.0 * sig ** 2 * kl / x ** 2)) if np.all(x > 0) else float("inf")
+    X = gain.sum() + len(gain) * alpha / q
+    pooled = float(2.0 * np.sum(sig ** 2) * kl / X ** 2) if X > 0 else float("inf")
+    return per, pooled

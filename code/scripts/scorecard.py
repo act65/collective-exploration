@@ -14,7 +14,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from regvec import status_quo_example  # noqa: E402
-from regvec.institutions import run_index, run_pilot, run_share, run_ir  # noqa: E402
+from regvec.institutions import (run_index, run_pilot, run_share, run_ir, run_pooled,  # noqa: E402
+                                 certification_pulls)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "reports", "scorecard.json")
@@ -53,7 +54,24 @@ def main():
     print("time-share done", round(time.time() - t0), "s")
     for alpha in (0.05, 0.2):
         runs[f"individually rational, alpha = {alpha}"] = run_ir(inst, A0, alpha, L, HORIZONS, seed=100)
-    res = {"T": HORIZONS, "institutions": {k: score(inst, v) for k, v in runs.items()}}
+    # Compensation: everyone is paid their status-quo reward and the surplus is
+    # shared equally, so each person's reward is mu_i0 + (welfare - W0) / N.
+    base, W0, N = inst.mu[:, A0], inst.welfare[A0], inst.N
+    shared = lambda w: base[None, None, :] + ((w - W0) / N)[:, :, None]
+    margins = {}
+    for alpha in (0.05, 0.2):
+        w, worst = run_pooled(inst, A0, alpha, L, HORIZONS, seed=200)
+        runs[f"compensation with a pooled floor, alpha = {alpha}"] = shared(w)
+        margins[str(alpha)] = {"worst_welfare_margin": worst, "floor": -N * alpha}
+    runs["utilitarian learner (Thompson) with compensation"] = shared(
+        runs["utilitarian learner (Thompson)"].sum(axis=2))
+    print("pooled done", round(time.time() - t0), "s")
+    res = {"T": HORIZONS, "institutions": {k: score(inst, v) for k, v in runs.items()},
+           "pooled_margins": margins}
+    # lower bounds on trials before a* may be held a fraction q of the time (alpha = 0.05)
+    gain = inst.mu[:, inst.a_star] - base
+    res["certification"] = {str(q): certification_pulls(gain, inst.sigma, 0.05, q)
+                            for q in (0.1, 0.2, 0.24, 1.0)}
     json.dump(res, open(OUT, "w"), indent=1)
     for k, v in res["institutions"].items():
         print(f"\n{k}")

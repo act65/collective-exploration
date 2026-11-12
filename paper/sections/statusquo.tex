@@ -96,7 +96,7 @@ $N$ & $K$ & no unanimous improvement exists & median share of the gain recovered
 \label{tab:ir}
 \end{table}
 
-\paragraph{Transfers.} If rewards could be moved between people, the utilitarian optimum could be made individually rational by paying the losers: in \cref{ex:sq}, $0.4$ per round from person 3 to persons 1 and 2. The learning burdens could be evened out the same way, and the amount that would have to move is $\tfrac12\sum_i|b_i-\bar b|$ per unit of $\log T$, logarithmic in the horizon (\cref{sec:exact}). In a model of committee experimentation with strategic voters, \citet{anesi2021} find that a small amount of redistribution restores efficient experimentation where veto rights do not. Our accounts point the same way: protection by veto costs welfare in every round, while compensation for the cost of learning is a vanishing fraction of the gain.
+\paragraph{Transfers.} If rewards could be moved between people, the utilitarian optimum could be made individually rational by paying the losers: in \cref{ex:sq}, $0.4$ per round from person 3 to persons 1 and 2. In a model of committee experimentation with strategic voters, \citet{anesi2021} find that a small amount of redistribution restores efficient experimentation where veto rights do not. \Cref{sec:comp} sets up compensation as an institution and compares it with the floors of this section.
 
 \subsection{A planner that is individually rational by construction}
 
@@ -123,7 +123,41 @@ For fixed $i$, $a$ and $n$, the mean of the first $n$ observations of person $i$
 
 The exploring share is what makes the planner learn. Before anything has been tried it puts weight $\alpha/((K-1)L)$ on each untried arm: the tolerance, divided by the worst that could happen. Optimism alone is not enough here. If a known arm pays more welfare per unit of tolerance used than an untried arm could under the most optimistic assumption, the exploiting share spends the whole tolerance on the known arm and never tries the other.
 
-We do not have a regret bound for this planner. The exploration weights suggest regret of order $T^{2/3}$ against $p^\star_\alpha$ by an explore-then-exploit argument, and the analyses of safe linear bandits suggest that $\sqrt T$ may be attainable with a better schedule; both are open.
+The planner's regret against its own target is of order $T^{2/3}$.
+
+\begin{proposition}[Regret]\label{prop:regret}
+Let $\alpha\le L$, and let $W_\alpha$ be the welfare of $p^\star_\alpha$. On every instance in $\Env_L$, with probability at least $1-2\delta$, for all $T$,
+\[
+  \sum_{t=1}^T\big(W_\alpha-W(p_t)\big)\ \le\ C_0+C_1\,T^{2/3}\sqrt{\log\frac{4NKT^2}{\delta}},
+\]
+\[
+  C_1=3NL+6\Big(\frac{s_{\max}(W_\alpha-W(a_0))}{\alpha}+\sigma\Big)\sqrt{\frac{(K-1)L}{\alpha}},
+\]
+where $s_{\max}=\max_is_i$ and $C_0$ does not depend on $T$.
+\end{proposition}
+
+\begin{proof}
+Let $\mathcal G$ be the event that $|\hat\mu_{i,a}-\mu_{i,a}|\le s_ir_n$ and $|\sum_i\hat\mu_{i,a}-W(a)|\le\sigma r_n$ for all $i$, all $a\neq a_0$ and all sample sizes $n$. As in \cref{prop:safe}, each of these $2(N+1)K$ families of events fails for some $n$ with probability at most $\delta/(4NK)$, so $\Prob(\mathcal G)\ge1-\delta$. On $\mathcal G$ every $p_t$ satisfies the true constraints, so $W(p_t)\le W_\alpha$ and each term of the sum lies in $[0,2NL]$.
+
+\emph{Every arm is tried often.} Let $\eta=\alpha/((K-1)L)$. The time-share with weight $\eta$ on each arm other than $a_0$ and the rest on $a_0$ satisfies the pessimistic constraints whatever the estimates, because $\ell_{i,a}\ge\mu_{i,a_0}-L$. So $e_t(a)\ge\eta$ and $p_t(a)\ge\eta\gamma_t$ for every $a\neq a_0$. The count $n_a(t)$ minus $\sum_{s\le t}p_s(a)$ is a martingale with increments bounded by one, so by the Azuma--Hoeffding inequality and a union bound over $a$ and $t$, with probability at least $1-\delta$,
+\[
+  n_a(t)\ \ge\ \eta\sum_{s\le t}s^{-1/3}-\sqrt{2t\log\frac{Kt(t+1)}{\delta}}\quad\text{for all } a\neq a_0 \text{ and all } t.
+\]
+Since $\sum_{s\le t}s^{-1/3}\ge\tfrac32(t^{2/3}-1)$ and the square root is of order $t^{1/2}$ up to a logarithm, there is $t_0$, depending on $\eta$, $K$ and $\delta$ only, with $n_a(t)\ge\tfrac12\eta\,t^{2/3}$ for all $t\ge t_0$. Call this event $\mathcal H$.
+
+\emph{The exploiting share is nearly optimal.} Work on $\mathcal G\cap\mathcal H$ at a round $t>t_0$, and let $r=r_n$ at $n=\tfrac12\eta(t-1)^{2/3}$, which bounds the radius of every arm. On $\mathcal G$, $\ell_{i,a}\ge\mu_{i,a}-2s_ir$ and $W(a)\le U_a\le W(a)+2\sigma r$. Let $\theta=2s_{\max}r/\alpha$, and enlarge $t_0$ if necessary so that $\theta\le1$. The time-share $p'=(1-\theta)p^\star_\alpha+\theta e_{a_0}$ satisfies the pessimistic constraints:
+\[
+  \textstyle\sum_ap'_a\ell_{i,a}\ \ge\ \sum_ap'_a\mu_{i,a}-2s_ir\ \ge\ (1-\theta)(\mu_{i,a_0}-\alpha)+\theta\mu_{i,a_0}-2s_ir\ \ge\ \mu_{i,a_0}-\alpha .
+\]
+Since $q_t$ maximises $\sum_ap_aU_a$ over such time-shares, $\sum_aq_{t,a}U_a\ge\sum_ap'_aU_a\ge W(p')=W_\alpha-\theta(W_\alpha-W(a_0))$, and $W(q_t)\ge\sum_aq_{t,a}U_a-2\sigma r$. Hence
+\[
+  W_\alpha-W(q_t)\ \le\ 2r\Big(\frac{s_{\max}(W_\alpha-W(a_0))}{\alpha}+\sigma\Big).
+\]
+
+\emph{Summing.} $W_\alpha-W(p_t)\le(W_\alpha-W(q_t))+2NL\gamma_t$. With $r\le2\sqrt{\log(4NKT^2/\delta)/\eta}\,(t-1)^{-1/3}$ for $t\le T$, and $\sum_{t\le T}t^{-1/3}\le\tfrac32T^{2/3}$, the rounds after $t_0$ contribute at most $C_1T^{2/3}\sqrt{\log(4NKT^2/\delta)}$ up to an additive constant, and the rounds up to $t_0$ at most $2NLt_0$.
+\end{proof}
+
+The constants are not optimised, and the analyses of safe linear bandits suggest that a rate of $\sqrt T$ may be attainable with a better schedule. The form of $C_1$ is informative all the same: it grows like $\alpha^{-3/2}$, so a tight tolerance is paid for in slow learning. \Cref{sec:comp} shows that part of this is unavoidable.
 
 \paragraph{Simulation.} \Cref{fig:planner} runs the planner on \cref{ex:sq} with $\alpha=0.05$, $L=1$ and $\delta=0.05$, against UCB on the welfare signal. Over 20 runs of $2\times10^5$ rounds the smallest per-round margin $(\mu p_t)_i-\mu_{i,a_0}$ was $-0.033$, inside the floor of $-0.05$. At the end the planner's time-share averaged $64\%$ $\astar$ and $36\%$ $b$, against a target of $70\%$ and $30\%$; persons 1 and 2 were within $0.01$ of their status-quo reward on average and person 3 was $0.34$ above. UCB reaches higher welfare and leaves persons 1 and 2 $0.18$ per round below the status quo. The planner is slow: it stays close to the status quo for about $10^4$ rounds, because each person's confidence interval has to shrink before the constraint lets it move.
 

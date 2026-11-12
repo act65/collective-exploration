@@ -13,19 +13,19 @@ and `_drafts/inbetween-posts/2026-10-24-who-pays-for-exploration.md`.
 ## Layout
 
 - `paper/` — the paper (`make` builds `main.pdf`; `make check` lists warnings).
-- `paper/sections/` — the time-sharing, status-quo and finite-horizon sections.
+- `paper/sections/` — the time-sharing, status-quo, compensation, finite-horizon and scorecard sections.
 - `code/regvec/` — closed forms (`instance.py`), planners vectorised over seeds (`planners.py`), LPs over the cone (`fairness.py`), time-sharing and status-quo LPs (`sharing.py`), the individually rational planner (`safe.py`), the one-reform dynamic program (`reform.py`).
-- `code/tests/` — 28 tests (`cd code && python -m pytest -q`, about 30 s). Each test compares a simulation or an independent computation with a closed form.
+- `code/tests/` — 30 tests (`cd code && python -m pytest -q`, about 30 s). Each test compares a simulation or an independent computation with a closed form.
 - `code/scripts/simulate.py` — numbers for the asymptotic sections. A full run takes about 4–5 min; `--quick` is faster. Output goes to `code/reports/results.json`, `code/reports/simulate.log` and `paper/figures/`.
 - `code/scripts/extensions.py` — numbers for the time-sharing, status-quo and finite-horizon sections (about 2 min), written to `code/reports/extensions.json`.
-- `code/scripts/scorecard.py` — the finite-horizon scorecard of institutions (about 2 min), written to `code/reports/scorecard.json`; the planners are in `code/regvec/institutions.py`.
+- `code/scripts/scorecard.py` — the finite-horizon scorecard of institutions (about 3 min), written to `code/reports/scorecard.json`; the planners are in `code/regvec/institutions.py`.
 - `code/scripts/figures.py` — all figures in the paper, drawn from closed forms and the two reports.
 - `notes/extensions.md` — the list of extensions and open problems.
 - `notes/review-and-directions.md`, `notes/lit-review.md` — the 2026-11-12 review of the first draft and the literature search.
 
 ## Status (2026-11-12)
 
-**Added on 2026-11-12** (sections 7–10 of the paper).
+**Added on 2026-11-12** (sections 7–11 of the paper).
 
 | Result | Statement | Status |
 |---|---|---|
@@ -35,8 +35,11 @@ and `_drafts/inbetween-posts/2026-10-24-who-pays-for-exploration.md`.
 | Proposition (time-sharing) | Smallest largest conflict loss is an LP; a* attains it iff the same alternative condition holds for the people with the largest conflict loss. | Proved; tested. |
 | Proposition (no free trial) | A planner that tolerates no expected loss for anyone never leaves the status quo. | Proved. |
 | Proposition (unanimity) | No unanimous improvement exists iff some welfare weights make the status quo optimal. | Proved; tested. |
-| Proposition (safety) | The individually rational planner keeps every person within α of the status quo in every round, with confidence 1−δ. | Proved; tested. **No regret bound.** |
-| Scorecard (section 10) | Seven institutions on the status-quo example, T = 30 to 30,000: welfare and each person's gain over the status quo. | Simulation only, one instance, untuned planners. |
+| Proposition (safety) | The individually rational planner keeps every person within α of the status quo in every round, with confidence 1−δ. | Proved; tested. |
+| Proposition (regret) | Its regret against the best time-share that respects the tolerance is O(T^{2/3}) up to a log factor, with a constant growing like α^{-3/2}. | Proved 2026-11-12; **the proof is new and should be re-checked**; constants not optimised. |
+| Proposition (what compensation does) | Paying everyone their status-quo reward and sharing the surplus gives each person a fixed share of the collective's gain; with equal shares the largest burden is at its lower bound. | Proved (short). |
+| Proposition (trials before a reform can be held) | Two-policy lower bounds on trials under per-person floors and under a pooled floor; the pooled bound is never larger. | Proved; inequality tested. Not matched by upper bounds. |
+| Scorecard (section 11) | Institutions with and without transfers on the status-quo example, T = 30 to 30,000: welfare and each person's gain over the status quo. | Simulation only, one instance, untuned planners. |
 | One-reform toy | Bayes-optimal thresholds and trial lengths with switching costs and terms. | Numerical only. |
 
 "Fairness is free" is now "unimprovable" throughout: the condition says the largest burden cannot be reduced, not that the burdens are fair.
@@ -82,7 +85,8 @@ Both are within about one standard error.
 - Otherwise, min-max lowers the worst burden by a median of only 2–8%, and costs a median of 49–73% extra total regret.
 
 **Open.**
-- A regret bound for the individually rational planner.
+- A tighter (√T?) regret bound for the individually rational planner, and upper bounds matching the certification lower bounds.
+- Compensation with strategic reporting.
 - The per-person cost of learning a time-share.
 - Finite horizon with several untried reforms.
 - An *adaptive* planner that reaches the min-max point on every instance without knowing ν (compare Baek & Farias's PF-UCB).

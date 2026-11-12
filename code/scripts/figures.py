@@ -344,6 +344,44 @@ def fig_scorecard():
     plt.close(fig)
 
 
+def fig_compare():
+    """Per-person floors against compensation with a pooled floor."""
+    path = os.path.join(REPORTS, "scorecard.json")
+    if not os.path.exists(path):
+        return
+    res = json.load(open(path))
+    if "compensation with a pooled floor, alpha = 0.05" not in res["institutions"]:
+        print("scorecard.json has no compensation rows; rerun scorecard.py")
+        return
+    T, inst = np.array(res["T"]), res["institutions"]
+    rows = [
+        ("utilitarian learner (Thompson) with compensation", "utilitarian learner, compensated (no floor)", MUTED, (0, (1, 2))),
+        ("compensation with a pooled floor, alpha = 0.2", "compensation, pooled floor, $\\alpha=0.2$", P12, (0, (4, 2))),
+        ("compensation with a pooled floor, alpha = 0.05", "compensation, pooled floor, $\\alpha=0.05$", P12, "-"),
+        ("individually rational, alpha = 0.2", "per-person floors, $\\alpha=0.2$", P3, (0, (4, 2))),
+        ("individually rational, alpha = 0.05", "per-person floors, $\\alpha=0.05$", P3, "-"),
+    ]
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(7.0, 3.6))
+    for key, label, col, ls in rows:
+        r = inst[key]
+        ax.plot(T, r["welfare"], color=col, ls=ls, lw=1.6, label=label)
+        bx.plot(T, r["worst_gain"], color=col, ls=ls, lw=1.6)
+    ax.axhline(2.6, color=GRID, lw=0.8, zorder=0)
+    bx.axhline(0, color=GRID, lw=0.8, zorder=0)
+    for a in (ax, bx):
+        a.set_xscale("log")
+        a.set_xlabel("horizon $T$ (rounds)")
+    ax.set_ylabel("average welfare per round")
+    ax.set_title("Welfare")
+    bx.set_ylabel("average gain per round\nover the status quo")
+    bx.set_title("The person who gains least")
+    fig.legend(loc="lower center", ncol=2, frameon=False, fontsize=7.5, handlelength=2.6,
+               columnspacing=1.4)
+    fig.tight_layout(w_pad=2.0, rect=(0, 0.17, 1, 1))
+    fig.savefig(os.path.join(FIGS, "fig_compare.pdf"))
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     os.makedirs(FIGS, exist_ok=True)
     fig_example()
@@ -353,4 +391,5 @@ if __name__ == "__main__":
     fig_planner()
     fig_reform()
     fig_scorecard()
+    fig_compare()
     print("wrote fig_example.pdf, fig_cone.pdf, fig_trajectories.pdf to", os.path.abspath(FIGS))

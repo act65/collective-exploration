@@ -312,3 +312,29 @@ def test_institutions_scores_are_time_averages_of_arm_rewards():
     assert ts[0] < ts[1] < ts[2] and ts[2] > 2.95
     ir = run_ir(inst, 3, 0.05, 1.0, hs, R=3)
     assert np.all(ir - inst.mu[:, 3] >= -0.05 - 1e-9)
+
+
+def test_pooled_planner_respects_the_welfare_floor_and_beats_per_person_floors():
+    from regvec.institutions import run_pooled, run_ir
+    inst, hs = status_quo_example(), [3000]
+    w, worst = run_pooled(inst, 3, 0.05, 1.0, hs, R=4)
+    assert worst >= -3 * 0.05 - 1e-9
+    ir = run_ir(inst, 3, 0.05, 1.0, hs, R=4).sum(axis=2)
+    assert w.mean() > ir.mean()
+
+
+def test_certification_bounds():
+    """Pooling can only lower the number of trials needed (independent noise),
+    and the per-person bound blows up as the marginal loser's slack vanishes."""
+    from regvec.institutions import certification_pulls
+    rng = np.random.default_rng(0)
+    for _ in range(200):
+        N = int(rng.integers(2, 8))
+        gain, sig = rng.normal(size=N), rng.uniform(0.3, 2.0, N)
+        per, pooled = certification_pulls(gain, sig, alpha=float(rng.uniform(0.05, 3.0)), q=float(rng.uniform(0.1, 1)))
+        if np.isfinite(per):
+            assert pooled <= per * (1 + 1e-12)
+    g = np.array([-0.2, -0.2, 0.8])
+    a, _ = certification_pulls(g, np.ones(3), 0.05, 0.2)
+    b, _ = certification_pulls(g, np.ones(3), 0.05, 0.24)
+    assert b > 10 * a and certification_pulls(g, np.ones(3), 0.05, 1.0)[0] == float("inf")
